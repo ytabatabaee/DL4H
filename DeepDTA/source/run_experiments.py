@@ -94,7 +94,7 @@ def build_combined_onehot(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH2):
     
 
     print(interactionModel.summary())
-    plot_model(interactionModel, to_file='figures/build_combined_onehot.png')
+    plot_model(interactionModel, to_file='figures/build_combined_onehot.pdf')
 
     return interactionModel
 
@@ -139,7 +139,7 @@ def build_combined_categorical(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH
 
     interactionModel.compile(optimizer='adam', loss='mean_squared_error', metrics=[cindex_score]) #, metrics=['cindex_score']
     print(interactionModel.summary())
-    plot_model(interactionModel, to_file='figures/build_combined_categorical.png')
+    plot_model(interactionModel, to_file='figures/build_combined_categorical.pdf')
 
     return interactionModel
 
@@ -175,7 +175,7 @@ def build_single_drug(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH2):
     interactionModel.compile(optimizer='adam', loss='mean_squared_error', metrics=[cindex_score])
 
     print(interactionModel.summary())
-    plot_model(interactionModel, to_file='figures/build_single_drug.png')
+    plot_model(interactionModel, to_file='figures/build_single_drug.pdf')
 
     return interactionModel
 
@@ -208,7 +208,7 @@ def build_single_prot(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH2):
     interactionModel.compile(optimizer='adam', loss='mean_squared_error', metrics=[cindex_score])
 
     print(interactionModel.summary())
-    plot_model(interactionModel, to_file='figures/build_single_protein.png')
+    plot_model(interactionModel, to_file='figures/build_single_protein.pdf')
 
     return interactionModel
 
@@ -235,7 +235,7 @@ def build_baseline(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH2):
     interactionModel.compile(optimizer='adam', loss='mean_squared_error', metrics=[cindex_score])
 
     print(interactionModel.summary())
-    plot_model(interactionModel, to_file='figures/build_baseline.png')
+    plot_model(interactionModel, to_file='figures/build_baseline.pdf')
 
     return interactionModel
 
@@ -292,9 +292,9 @@ def nfold_1_2_3_setting_sample(XD, XT,  Y, label_row_inds, label_col_inds, measu
         testloss.append(foldloss)
         avgperf += foldperf
 
-    avgperf = avgperf / len(test_sets)
-    avgloss = np.mean(testloss)
-    teststd = np.std(testperfs)
+    avgperf = avgperf #/ len(test_sets)
+    avgloss = testloss[0]#np.mean(testloss)
+    teststd = np.std([testperfs[0]]) #np.std(testperfs)
 
     logging("Test Performance CI", FLAGS)
     logging(testperfs, FLAGS)
@@ -360,8 +360,9 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
 
                     gridmodel = runmethod(FLAGS, param1value, param2value, param3value)
                     es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=15)
+                    mc = ModelCheckpoint(filepath='pretrained/combined_kiba.h5')
                     gridres = gridmodel.fit(([np.array(train_drugs),np.array(train_prots) ]), np.array(train_Y), batch_size=batchsz, epochs=epoch, 
-                            validation_data=( ([np.array(val_drugs), np.array(val_prots) ]), np.array(val_Y)),  shuffle=False, callbacks=[es] ) 
+                            validation_data=( ([np.array(val_drugs), np.array(val_prots) ]), np.array(val_Y)),  shuffle=False, callbacks=[es, mc] ) 
 
 
                     predicted_labels = gridmodel.predict([np.array(val_drugs), np.array(val_prots) ])
@@ -379,6 +380,20 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
                     all_losses[pointer][foldind]= loss
 
                     pointer +=1
+        break
+    
+    for foldind in range(len(val_sets)):
+        valinds = val_sets[foldind]
+        labeledinds = labeled_sets[foldind]
+
+        terows = label_row_inds[valinds]
+        tecols = label_col_inds[valinds]
+
+        val_drugs, val_prots,  val_Y = prepare_interaction_pairs(XD, XT,  Y, terows, tecols)
+        trained_model = load_model('pretrained/combined_kiba.h5', custom_objects={"cindex_score": cindex_score})
+        predicted_labels = trained_model.predict([np.array(val_drugs), np.array(val_prots)])
+        plotScatter(predicted_labels, val_Y, foldind)
+        break
 
     bestperf = -float('Inf')
     bestpointer = None
@@ -434,7 +449,7 @@ def plotLoss(history, batchind, epochind, param3ind, foldind):
     plt.xlabel('epoch')
 	#plt.legend(['trainloss', 'valloss', 'cindex', 'valcindex'], loc='upper left')
     plt.legend(['trainloss', 'valloss'], loc='upper left')
-    plt.savefig("figures/"+figname +".png" , dpi=None, facecolor='w', edgecolor='w', orientation='portrait', 
+    plt.savefig("figures/"+figname +".pdf" , dpi=None, facecolor='w', edgecolor='w', orientation='portrait', 
                     papertype=None, format=None,transparent=False, bbox_inches=None, pad_inches=0.1,frameon=None)
     plt.close()
 
@@ -447,10 +462,23 @@ def plotLoss(history, batchind, epochind, param3ind, foldind):
     plt.plot(history.history['cindex_score'])
     plt.plot(history.history['val_cindex_score'])
     plt.legend(['traincindex', 'valcindex'], loc='upper left')
-    plt.savefig("figures/"+figname + "_acc.png" , dpi=None, facecolor='w', edgecolor='w', orientation='portrait', 
+    plt.savefig("figures/"+figname + "_acc.pdf" , dpi=None, facecolor='w', edgecolor='w', orientation='portrait', 
                             papertype=None, format=None,transparent=False, bbox_inches=None, pad_inches=0.1,frameon=None)
     plt.close()
 
+
+def plotScatter(Y_pred, Y_true, foldind):
+    figname = "kiba_scatter_" + str(foldind) + ".pdf"
+    plt.figure()
+    plt.title('KIBA')
+    plt.ylabel('Measured')
+    plt.xlabel('Predicted')    
+    plt.scatter(Y_pred, Y_true, edgecolors='black')
+    lims = [np.min([plt.gca().get_xlim(), plt.gca().get_ylim()]), np.max([plt.gca().get_xlim(), plt.gca().get_ylim()])]
+    plt.plot(lims, lims, '--', alpha=0.75, zorder=0)
+    plt.savefig("figures/"+figname , dpi=None, facecolor='w', edgecolor='w', orientation='portrait',
+                            papertype=None, format=None,transparent=False, bbox_inches=None, pad_inches=0.1,frameon=None)
+    plt.close()
 
 
 def prepare_interaction_pairs(XD, XT,  Y, rows, cols):
@@ -531,6 +559,8 @@ def run_regression( FLAGS ):
     deepmethod = build_combined_categorical
 
     experiment(FLAGS, perfmeasure, deepmethod)
+    #deepmethod.save('pretrained/build_combined_categorical')
+
 
 
 
