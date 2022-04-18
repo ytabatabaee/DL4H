@@ -1,4 +1,4 @@
-# Reprocuding DeepDTA: Deep Drug–Target Binding Affinity Prediction
+# Reproducing DeepDTA: Deep Drug–Target Binding Affinity Prediction
 This repository contains the codes and data for the final project of Deep Learning for Healthcare course at UIUC in Spring 2022. This project attempts to reproduce the major results of the DeepDTA paper, and includes some additional experiments beyond the paper.
 
 ## Contents
