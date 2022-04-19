@@ -44,3 +44,13 @@ It is important to note that most Tensorflow and Keras commands used in DeepDTA 
 - [C-compiler](https://gcc.gnu.org)
 
 To compute the Area Under Precision Recall curve (AUPR) as performance measure, all methods use the `auc.jar` package available for download at [http://mark.goadrich.com/programs/AUC/](http://mark.goadrich.com/programs/AUC/) and located at [auc.jar](DeepDTA/source/auc.jar) in the repository.
+
+## Data
+The paper uses the Davis Kinase binding affinity dataset [(Davis et al., 2011)](https://www.nature.com/articles/nbt.1990), containing 442 proteins and 68 compounds with overall 30,056 interactions, and the KIBA large-scale kinase inhibitors bioactivity dataset [(Tang et al., 2014)](https://pubs.acs.org/doi/10.1021/ci400709d), containing 229 proteins and 2111 compounds with overall 118,254 interactions. 
+
+The preprocessed datasets are located under [DeepDTA/data](DeepDTA/data) directory as `kiba` and `davis`. Each dataset directory contains several files as follows:
+- `proteins.txt`: This file contains raw amino-acid sequences of proteins.
+- `ligands_can.txt`: This file continas the raw SMILES sequences of ligands (compounds) in canonical form.
+- `Y`: This file contains binding affinity values between proteins and ligands.
+- `target-target_similarities_WS.txt`: This file contains the Smith-Waterman (SW) matrices of similarity between target pairs.
+- `drug-drug_similarities_2D.txt`: This file contains the Pubchem Sim matrices of similarity between drug pairs.
