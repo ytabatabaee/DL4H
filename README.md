@@ -2,7 +2,7 @@
 This repository contains the codes and data for the final project of Deep Learning for Healthcare course at UIUC in Spring 2022. This project attempts to reproduce the major results of the DeepDTA paper, and includes some additional experiments beyond the paper.
 
 ## Contents
-- [Original Paper](#original-paper)
+- [DeepDTA](#deepdta)
 - [Dependencies](#dependencies)
 - [Data](#data)
 - [Codes](#codes)
@@ -11,8 +11,15 @@ This repository contains the codes and data for the final project of Deep Learni
   * [Evaluation](#evaluation)
 - [Pretrained Models](#pretrained-models)
 - [Results](#results)
+- [Acknowledgements](#acknowledgements)
 
-## Original Paper
+## DeepDTA
+DeepDTA is a deep learning-based model that predicts the level of interaction, or binding affinity, between a drug and a target chemical. DeepDTA uses convolutional neural networks (CNNs) to learn representations from raw sequences of proteins and ligands.
+
+<p align="center">
+  <img src="https://github.com/hkmztrk/DeepDTA/blob/master/docs/figures/deepdta.PNG" alt="drawing" width="750"/>
+</p>
+
 **Citation to the paper**: Hakime Öztürk, Arzucan Özgür, Elif Ozkirimli, DeepDTA: deep drug–target binding affinity prediction, Bioinformatics, Volume 34, Issue 17, 01 September 2018, Pages i821–i829, [https://doi.org/10.1093/bioinformatics/bty593](https://doi.org/10.1093/bioinformatics/bty593)
 
 **Code repository of the paper**: [https://github.com/hkmztrk/DeepDTA](https://github.com/hkmztrk/DeepDTA)
@@ -48,9 +55,47 @@ To compute the Area Under Precision Recall curve (AUPR) as performance measure, 
 ## Data
 The paper uses the Davis Kinase binding affinity dataset [(Davis et al., 2011)](https://www.nature.com/articles/nbt.1990), containing 442 proteins and 68 compounds with overall 30,056 interactions, and the KIBA large-scale kinase inhibitors bioactivity dataset [(Tang et al., 2014)](https://pubs.acs.org/doi/10.1021/ci400709d), containing 229 proteins and 2111 compounds with overall 118,254 interactions. 
 
-The preprocessed datasets are located under [DeepDTA/data](DeepDTA/data) directory as `kiba` and `davis`. Each dataset directory contains several files as follows:
+The preprocessed datasets are located under [DeepDTA/data](DeepDTA/data) directory as `kiba` and `davis`. Each dataset directory contains several files named as follows:
 - `proteins.txt`: This file contains raw amino-acid sequences of proteins.
 - `ligands_can.txt`: This file continas the raw SMILES sequences of ligands (compounds) in canonical form.
 - `Y`: This file contains binding affinity values between proteins and ligands.
 - `target-target_similarities_WS.txt`: This file contains the Smith-Waterman (SW) matrices of similarity between target pairs.
 - `drug-drug_similarities_2D.txt`: This file contains the Pubchem Sim matrices of similarity between drug pairs.
+
+## Results
+For each experiment on the Davis dataset, the total number of training samples was 20036 and the total number of test samples was 5010.
+### Davis
+| Method      | Proteins    |Compounds    | CI-Index | MSE Loss |Avg Training Time (per epoch) |
+| ----------- | ----------- | ----------- | ----------- | ----------- |----------- |
+| KronRLS     |  S–W       | Pubchem Sim |  |  |  |
+| SimBoost    |  S–W       | Pubchem Sim |  |  |  |
+| DeepDTA     |  S–W       | Pubchem Sim |  |  |  |
+| DeepDTA     |   CNN      | Pubchem Sim |  |  |  |
+| DeepDTA     |  S–W       | CNN         |  |  |  |
+| DeepDTA     |    CNN     | CNN         |  |  |  |
+
+### KIBA
+For each experiment on the KIBA dataset, the total number of training samples was 78836 and the total number of test samples was 19709.
+| Method      | Proteins    |Compounds    | CI-Index | MSE Loss |Avg Training Time (per epoch) |
+| ----------- | ----------- | ----------- | ----------- | ----------- |----------- |
+| KronRLS     |  S–W       | Pubchem Sim |  |  |  |
+| SimBoost    |  S–W       | Pubchem Sim |  |  |  |
+| DeepDTA     |  S–W       | Pubchem Sim |  |  |  |
+| DeepDTA     |   CNN      | Pubchem Sim |  |  |  |
+| DeepDTA     |  S–W       | CNN         |  |  |  |
+| DeepDTA     |    CNN     | CNN         |  |  |  |
+## Acknowledgements
+Please cite the original paper if you are using this code in your work.
+```
+@article{ozturk2018deepdta,
+  title={DeepDTA: deep drug--target binding affinity prediction},
+  author={{\"O}zt{\"u}rk, Hakime and {\"O}zg{\"u}r, Arzucan and Ozkirimli, Elif},
+  journal={Bioinformatics},
+  volume={34},
+  number={17},
+  pages={i821--i829},
+  year={2018},
+  publisher={Oxford University Press}
+}
+```
+
