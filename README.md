@@ -24,7 +24,7 @@ DeepDTA is a deep learning-based model that predicts the level of interaction, o
 
 **Code repository of the paper**: [https://github.com/hkmztrk/DeepDTA](https://github.com/hkmztrk/DeepDTA)
 
-**Code repository of the baseline SimbBoost**: [https://github.com/hetong007/SimBoost](https://github.com/hetong007/SimBoost)
+**Code repository of the baseline SimBoost**: [https://github.com/hetong007/SimBoost](https://github.com/hetong007/SimBoost)
 
 **Code repository of the baseline KronRLS**: [https://github.com/aatapa/RLScore](https://github.com/aatapa/RLScore)
 
@@ -55,12 +55,32 @@ To compute the Area Under Precision Recall curve (AUPR) as performance measure, 
 ## Data
 The paper uses the Davis Kinase binding affinity dataset [(Davis et al., 2011)](https://www.nature.com/articles/nbt.1990), containing 442 proteins and 68 compounds with overall 30,056 interactions, and the KIBA large-scale kinase inhibitors bioactivity dataset [(Tang et al., 2014)](https://pubs.acs.org/doi/10.1021/ci400709d), containing 229 proteins and 2111 compounds with overall 118,254 interactions. 
 
-The preprocessed datasets are located under [DeepDTA/data](DeepDTA/data) directory as `kiba` and `davis`. Each dataset directory contains several files named as follows:
+**Raw Data Download**: The raw datasets are available for download from the following links:
+- Davis: [http://staff.cs.utu.fi/~aatapa/data/DrugTarget/drug-target_interaction_affinities_Kd__Davis_et_al.2011.txt](http://staff.cs.utu.fi/~aatapa/data/DrugTarget/drug-target_interaction_affinities_Kd__Davis_et_al.2011.txt)
+- KIBA: [http://pubs.acs.org/doi/suppl/10.1021/ci400709d](http://pubs.acs.org/doi/suppl/10.1021/ci400709d)
+
+**Preprocessed Data**: The preprocessed datasets are located under [DeepDTA/data](DeepDTA/data) directory as `kiba` and `davis`. Each dataset directory contains several files named as follows:
 - `proteins.txt`: This file contains raw amino-acid sequences of proteins.
 - `ligands_can.txt`: This file continas the raw SMILES sequences of ligands (compounds) in canonical form.
 - `Y`: This file contains binding affinity values between proteins and ligands.
 - `target-target_similarities_WS.txt`: This file contains the Smith-Waterman (SW) matrices of similarity between target pairs.
 - `drug-drug_similarities_2D.txt`: This file contains the Pubchem Sim matrices of similarity between drug pairs.
+
+**Data Statistics**: The [data_statistics.ipynb](./data_statistics.ipynb) file demonstrates some statistics of the datasets, including distribution of the binding affinity scores and distribution of the protein and SMILES sequence lengths for both Davis and KIBA datasets.
+
+## Pretrained Models
+
+*Note*: Since the Keras and Tensorflow versions used in DeepDTA are old and now deprecated, the recent `h5py` packages can not be used to load the pretrained models. You will need to reinstall the package using the following command:
+```
+pip install 'h5py==2.10.0' --force-reinstall
+```
+The following code can then be used to load a pretrained model:
+```python
+from keras.models import load_model
+model = load_model('combined_davis.h5', custom_objects={"cindex_score": cindex_score})
+model.summary()
+```
+Based on where you run the code, you may also need to have the `cindex_score` function, which is available at [DeepDTA/source/run_experiments.py](DeepDTA/source/run_experiments.py).
 
 ## Results
 For each experiment on the Davis dataset, the total number of training samples was 20036 and the total number of test samples was 5010.
