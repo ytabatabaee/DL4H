@@ -2,8 +2,12 @@ import sys
 import random
 random.seed(1)
 import subprocess
-
+from sklearn.metrics import mean_squared_error
 import numpy as np
+import math
+import itertools
+import json
+import pickle
 
 from kron_rls import KronRLS
 from cindex_measure import cindex
@@ -94,20 +98,27 @@ def nested_nfold_1_2_3_setting_with_imputation(XD, XT, Y, label_row_inds, label_
     bestparamind, bestperf, all_predictions = general_nfold_cv_with_imputation(XD, XT, Y, label_row_inds, label_col_inds, measure, outer_train_sets, folds)
     finalpreds = np.zeros(Y[label_row_inds, label_col_inds].shape)
     avgperf = 0.
+    avgmse = 0.
     for test_foldind in range(len(folds)):
         bestparamind = bestparaminds[test_foldind]
         test_fold = folds[test_foldind]
         finalpreds[test_fold] = all_predictions[bestparamind][test_fold]
-        foldperf = measure(Y[label_row_inds, label_col_inds].ravel().T[test_fold], finalpreds.ravel().T[test_fold])
+        Y_true = Y[label_row_inds, label_col_inds].ravel().T[test_fold]
+        Y_pred = finalpreds.ravel().T[test_fold]
+        foldperf = measure(Y_true, Y_pred)
+        foldmse = mean_squared_error(Y_true, Y_pred)
         avgperf += foldperf
+        avgmse += foldmse
     avgperf = avgperf / foldcount
+    avgmse = avgmse / foldcount
     #perf = measure(Y[label_row_inds, label_col_inds].ravel().T, finalpreds.ravel().T)
     #poolaupr = get_aupr(Y[label_row_inds, label_col_inds].ravel().T, finalpreds.ravel().T)
     print bestparaminds
     #print 'pooled ci', perf
-    print 'averaged performance', avgperf
+    print 'averaged cindex', avgperf
+    print 'averaged mse', avgmse
     #print 'pooled aupr', poolaupr
-    return avgperf
+    return avgperf, avgmse
 
 def nested_nfold_setting_4_with_imputation(XD, XT, Y, label_row_inds, label_col_inds, measure):
 
@@ -155,6 +166,7 @@ def nested_nfold_setting_4_with_imputation(XD, XT, Y, label_row_inds, label_col_
         finalpreds[:, test_fold] = all_predictions[bestparam][test_fold]
         foldperf = measure(Y[label_row_inds, label_col_inds].ravel().T[test_fold], finalpreds.ravel().T[test_fold])
         avgperf += foldperf
+
     perf = measure(Y[label_row_inds, label_col_inds].ravel().T, finalpreds.ravel().T)
     print bestparams
     #print 'pooled perf', perf
@@ -166,7 +178,7 @@ def nested_nfold_setting_4_with_imputation(XD, XT, Y, label_row_inds, label_col_
 def general_nfold_cv_with_imputation(XD, XT, Y, label_row_inds, label_col_inds, measure, labeled_sets, val_sets):
 
     logrpstart = -10
-    logrpend = 41
+    logrpend = 20
 
     print 'param grid: ', logrpstart, logrpend
     all_predictions = []
@@ -202,6 +214,7 @@ def general_nfold_cv_with_imputation(XD, XT, Y, label_row_inds, label_col_inds, 
             learner.solve_linear(regparam)
             hopred = learner.getModel().predictWithDataMatrices(XD, XT)
             all_predictions[logrpind][valinds] = hopred[label_row_inds[valinds], label_col_inds[valinds]]
+        pickle.dump(learner, open('kiba_kronrls.pkl', 'wb'))
         #print foldind, 'done'
     #print
     bestperf = -float('Inf')
@@ -259,34 +272,45 @@ def experiment(XD, XT, Y, perfmeasure, foldcount=5):
 
     label_row_inds, label_col_inds = np.where(np.isnan(Y)==False)
     #setting 1 folds
-    S1_folds = get_random_folds(len(label_row_inds), foldcount)
+    S1_folds = json.load(open(DATA_PATH + 'kiba/' + "folds/train_fold_setting1.txt"))[0:4]#list(itertools.chain.from_iterable(json.load(open(DATA_PATH + 'davis/' + "folds/train_fold_setting1.txt"))))
+    test_fold_S1 = json.load(open(DATA_PATH + 'kiba/' + "folds/test_fold_setting1.txt"))
+    #print(test_fold_S1)
+    S1_folds.append(test_fold_S1)
+    #S1_folds = get_random_folds(len(label_row_inds), foldcount)
+    #print(S1_folds)
+    print(len(S1_folds))
 
-    drugcount = XD.shape[0]
+    #drugcount = XD.shape[0]
     #setting 2 folds
-    S2_folds = get_drugwise_folds(label_row_inds, label_col_inds, drugcount, foldcount)
+    #S2_folds = get_drugwise_folds(label_row_inds, label_col_inds, drugcount, foldcount)
 
-    targetcount = XT.shape[0]
+    #targetcount = XT.shape[0]
     #setting 3 folds
-    S3_folds = get_targetwise_folds(label_row_inds, label_col_inds, targetcount, foldcount)
+    #S3_folds = get_targetwise_folds(label_row_inds, label_col_inds, targetcount, foldcount)
 
 
     #print "setting 1"
-    S1_avgperf = nested_nfold_1_2_3_setting_with_imputation(XD, XT, Y, label_row_inds, label_col_inds, perfmeasure, S1_folds)
+    S1_avgperf, S1_avgmse = nested_nfold_1_2_3_setting_with_imputation(XD, XT, Y, label_row_inds, label_col_inds, perfmeasure, S1_folds)
 
-    print "setting 2"
-    S2_avgperf = nested_nfold_1_2_3_setting_with_imputation(XD, XT, Y, label_row_inds, label_col_inds, perfmeasure, S2_folds)
+    #print "setting 2"
+    #S2_avgperf, S2_avgmse = nested_nfold_1_2_3_setting_with_imputation(XD, XT, Y, label_row_inds, label_col_inds, perfmeasure, S2_folds)
 
-    print "setting 3"
-    S3_avgperf = nested_nfold_1_2_3_setting_with_imputation(XD, XT, Y, label_row_inds, label_col_inds, perfmeasure, S3_folds)
+    #print "setting 3"
+    #S3_avgperf, S3_avgmse = nested_nfold_1_2_3_setting_with_imputation(XD, XT, Y, label_row_inds, label_col_inds, perfmeasure, S3_folds)
 
-    print "setting 4"
+    #print "setting 4"
     #In setting 4 a 3x3 fold split is automatically generated inside the called function
-    S4_avgperf = nested_nfold_setting_4_with_imputation(XD, XT, Y, label_row_inds, label_col_inds, perfmeasure)
+    #S4_avgperf, S4_avgmse = nested_nfold_setting_4_with_imputation(XD, XT, Y, label_row_inds, label_col_inds, perfmeasure)
 
     print "Setting 1 Nested CV performance", S1_avgperf
-    print "Setting 2 Nested CV performance", S2_avgperf
-    print "Setting 3 Nested CV performance", S3_avgperf
-    print "Setting 4 Nested CV performance", S4_avgperf
+    #print "Setting 2 Nested CV performance", S2_avgperf
+    #print "Setting 3 Nested CV performance", S3_avgperf
+    #print "Setting 4 Nested CV performance", S4_avgperf
+
+    print "Setting 1 Nested CV MSE", S1_avgmse
+    #print "Setting 2 Nested CV MSE", S2_avgmse
+    #print "Setting 3 Nested CV MSE", S3_avgmse
+    #print "Setting 4 Nested CV MSE", S4_avgmse
 
 #Some examples on how the program can be run
 
@@ -294,6 +318,7 @@ DATA_PATH = "../DeepDTA/data/"
 
 def load_davis():
     Y = np.loadtxt(DATA_PATH + "davis/" + "drug-target_interaction_affinities_Kd__Davis_et_al.2011v1.txt")
+    Y = -(np.log10(Y/(math.pow(10,9))))
     XD = np.loadtxt(DATA_PATH + "davis/" + "drug-drug_similarities_2D.txt")
     XT = np.loadtxt(DATA_PATH + "davis/" + "target-target_similarities_WS.txt")
     return XD, XT, Y
@@ -318,6 +343,16 @@ def davis_regression():
     #the same value for binary Y-values (e.g. +1,-1)
     perfmeasure = cindex
     XD, XT, Y = load_davis()
+    experiment(XD, XT, Y, perfmeasure)
+
+def kiba_regression():
+    #Run the experiment on davis data with real-valued outputs
+    #and concordance index as performance measure
+    #concordance index is a value between 0 and 1, 0.5 random baseline
+    #generalization of area under ROC curve (AUC) to regression, returns
+    #the same value for binary Y-values (e.g. +1,-1)
+    perfmeasure = cindex
+    XD, XT, Y = load_kiba()
     experiment(XD, XT, Y, perfmeasure)
 
 def davis_classification_cindex():
@@ -381,8 +416,9 @@ def metz_classification_aupr():
 
 if __name__=="__main__":
     #davis_regression()
+    kiba_regression()
     #davis_classification_cindex()
-    davis_classification_aupr()
+    #davis_classification_aupr()
     #metz_regression()
     #metz_classification_cindex()
     #metz_classification_aupr()
