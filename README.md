@@ -24,7 +24,9 @@ DeepDTA is a deep learning-based model that predicts the level of interaction, o
 
 **Code repository of the paper**: [https://github.com/hkmztrk/DeepDTA](https://github.com/hkmztrk/DeepDTA)
 
-**Code repository of the baseline SimBoost**: [https://github.com/hetong007/SimBoost](https://github.com/hetong007/SimBoost)
+**Code repository of the baseline SimBoost (official - in R)**: [https://github.com/hetong007/SimBoost](https://github.com/hetong007/SimBoost)
+
+**Code repository of the baseline SimBoost (unofficial - in Python)**: [https://github.com/mahtaz/Simboost-ML_project-](https://github.com/mahtaz/Simboost-ML_project-)
 
 **Code repository of the baseline KronRLS**: [https://github.com/aatapa/RLScore](https://github.com/aatapa/RLScore)
 
@@ -69,7 +71,11 @@ The paper uses the Davis Kinase binding affinity dataset [(Davis et al., 2011)](
 **Data Statistics**: The [data_statistics.ipynb](./data_statistics.ipynb) file demonstrates some statistics of the datasets, including distribution of the binding affinity scores and distribution of the protein and SMILES sequence lengths for both Davis and KIBA datasets.
 
 ## Pretrained Models
+Most of the pretrained models are provided in the [pretrained_models](./pretrained_models) directory in Github, but the ones that were larger than 100MB are provided in Google Drive, with links available below:
+- KronRLS davis model: [pretrained_models/davis_kronrls.pkl](./pretrained_models/davis_kronrls.pkl)
+- KronRLS KIBA model: [davis_kronrls.pkl - Google Drive link](https://drive.google.com/drive/folders/1W9iw1pddJd3y52l56Ac1eIDWplLAtJWP?usp=sharing)
 
+#### Loading DeepDTA pretrained models
 *Note*: Since the Keras and Tensorflow versions used in DeepDTA are old and now deprecated, the recent `h5py` packages can not be used to load the pretrained models. You will need to reinstall the package using the following command:
 ```
 pip install 'h5py==2.10.0' --force-reinstall
@@ -85,8 +91,8 @@ Based on where you run the code, you may also need to have the `cindex_score` fu
 ## Results
 For each experiment on the Davis dataset, the total number of training samples was 20036 and the total number of test samples was 5010.
 ### Davis
-| Method      | Proteins    |Compounds    | CI-Index | MSE Loss |Avg Training Time (per epoch) |
-| ----------- | ----------- | ----------- | ----------- | ----------- |----------- |
+| Method      | Proteins    |Compounds    | CI-Index | MSE Loss |
+| ----------- | ----------- | ----------- | ----------- | ----------- |
 | KronRLS     |  S–W       | Pubchem Sim |  |  |  |
 | SimBoost    |  S–W       | Pubchem Sim |  |  |  |
 | DeepDTA     |  S–W       | Pubchem Sim |  |  |  |
@@ -96,8 +102,8 @@ For each experiment on the Davis dataset, the total number of training samples w
 
 ### KIBA
 For each experiment on the KIBA dataset, the total number of training samples was 78836 and the total number of test samples was 19709.
-| Method      | Proteins    |Compounds    | CI-Index | MSE Loss |Avg Training Time (per epoch) |
-| ----------- | ----------- | ----------- | ----------- | ----------- |----------- |
+| Method      | Proteins    |Compounds    | CI-Index | MSE Loss |
+| ----------- | ----------- | ----------- | ----------- | ----------- |
 | KronRLS     |  S–W       | Pubchem Sim |  |  |  |
 | SimBoost    |  S–W       | Pubchem Sim |  |  |  |
 | DeepDTA     |  S–W       | Pubchem Sim |  |  |  |
