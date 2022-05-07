@@ -31,7 +31,7 @@ DeepDTA is a deep learning-based model that predicts the level of interaction, o
 **Code repository of the baseline KronRLS**: [https://github.com/aatapa/RLScore](https://github.com/aatapa/RLScore)
 
 ## Dependencies
-**DeepDTA** is written in Python 3 and has the following dependencies. 
+**DeepDTA** is written in Python 3 and has the following dependencies.
 - [Python 3.4+](https://www.python.org)
 - [Keras 2.x](https://pypi.org/project/keras/)
 - [Tensorflow 1.x](https://www.tensorflow.org/install/)
@@ -63,7 +63,7 @@ It is important to note that most Tensorflow and Keras commands used in DeepDTA 
 To compute the Area Under Precision Recall curve (AUPR) as performance measure, all methods use the `auc.jar` package available for download at [http://mark.goadrich.com/programs/AUC/](http://mark.goadrich.com/programs/AUC/) and located at [auc.jar](DeepDTA/source/auc.jar) in the repository.
 
 ## Data
-The paper uses the Davis Kinase binding affinity dataset [(Davis et al., 2011)](https://www.nature.com/articles/nbt.1990), containing 442 proteins and 68 compounds with overall 30,056 interactions, and the KIBA large-scale kinase inhibitors bioactivity dataset [(Tang et al., 2014)](https://pubs.acs.org/doi/10.1021/ci400709d), containing 229 proteins and 2111 compounds with overall 118,254 interactions. 
+The paper uses the Davis Kinase binding affinity dataset [(Davis et al., 2011)](https://www.nature.com/articles/nbt.1990), containing 442 proteins and 68 compounds with overall 30,056 interactions, and the KIBA large-scale kinase inhibitors bioactivity dataset [(Tang et al., 2014)](https://pubs.acs.org/doi/10.1021/ci400709d), containing 229 proteins and 2111 compounds with overall 118,254 interactions.
 
 **Raw Data Download**: The raw datasets are available for download from the following links:
 - Davis: [http://staff.cs.utu.fi/~aatapa/data/DrugTarget/drug-target_interaction_affinities_Kd__Davis_et_al.2011.txt](http://staff.cs.utu.fi/~aatapa/data/DrugTarget/drug-target_interaction_affinities_Kd__Davis_et_al.2011.txt)
@@ -81,7 +81,9 @@ The paper uses the Davis Kinase binding affinity dataset [(Davis et al., 2011)](
 ## Pretrained Models
 Most of the pretrained models are provided in the [pretrained_models](./pretrained_models) directory in Github, but the ones that were larger than 100MB are provided in Google Drive, with links available below:
 - KronRLS davis model: [pretrained_models/davis_kronrls.pkl](./pretrained_models/davis_kronrls.pkl)
-- KronRLS KIBA model: [davis_kronrls.pkl - Google Drive link](https://drive.google.com/drive/folders/1W9iw1pddJd3y52l56Ac1eIDWplLAtJWP?usp=sharing)
+- KronRLS KIBA model: [kiba_kronrls.pkl - Google Drive link](https://drive.google.com/drive/folders/1W9iw1pddJd3y52l56Ac1eIDWplLAtJWP?usp=sharing)
+- SimBoost davis model: [pretrained_models/davis_simboost.pkl](./pretrained_models/davis_simboost.pkl)
+- SimBoost KIBA model: [pretrained_models/kiba_simboost.pkl](./pretrained_models/kiba_simboost.pkl)
 
 #### Loading DeepDTA pretrained models
 *Note*: Since the Keras and Tensorflow versions used in DeepDTA are old and now deprecated, the recent `h5py` packages can not be used to load the pretrained models. You will need to reinstall the package using the following command:
@@ -101,23 +103,23 @@ For each experiment on the Davis dataset, the total number of training samples w
 ### Davis
 | Method      | Proteins    |Compounds    | CI-Index | MSE Loss |
 | ----------- | ----------- | ----------- | ----------- | ----------- |
-| KronRLS     |  S–W       | Pubchem Sim | 0.867 | 0.376 | 
-| SimBoost    |  S–W       | Pubchem Sim | 0.862 | 0.298 | 
-| DeepDTA     |  S–W       | Pubchem Sim | 0.771 | 0.685 | 
-| DeepDTA     |   CNN      | Pubchem Sim | 0.810 | 0.490 | 
-| DeepDTA     |  S–W       | CNN         | 0.823 | 0.462 | 
-| DeepDTA     |    CNN     | CNN         | 0.876 | 0.255 | 
+| KronRLS     |  S–W       | Pubchem Sim | 0.867 | 0.376 |
+| SimBoost    |  S–W       | Pubchem Sim | 0.862 | 0.298 |
+| DeepDTA     |  S–W       | Pubchem Sim | 0.771 | 0.685 |
+| DeepDTA     |   CNN      | Pubchem Sim | 0.810 | 0.490 |
+| DeepDTA     |  S–W       | CNN         | 0.823 | 0.462 |
+| DeepDTA     |    CNN     | CNN         | 0.876 | 0.255 |
 
 ### KIBA
 For each experiment on the KIBA dataset, the total number of training samples was 78836 and the total number of test samples was 19709.
 | Method      | Proteins    |Compounds    | CI-Index | MSE Loss |
 | ----------- | ----------- | ----------- | ----------- | ----------- |
-| KronRLS     |  S–W       | Pubchem Sim | 0.794 | 0.373 | 
-| SimBoost    |  S–W       | Pubchem Sim | 0.824 | 0.279 | 
-| DeepDTA     |  S–W       | Pubchem Sim | 0.704 | 1.59 | 
-| DeepDTA     |   CNN      | Pubchem Sim | 0.702 | 0.541 | 
-| DeepDTA     |  S–W       | CNN         | 0.759 | 0.355 | 
-| DeepDTA     |    CNN     | CNN         | 0.857 | 0.211 | 
+| KronRLS     |  S–W       | Pubchem Sim | 0.794 | 0.373 |
+| SimBoost    |  S–W       | Pubchem Sim | 0.824 | 0.279 |
+| DeepDTA     |  S–W       | Pubchem Sim | 0.704 | 1.59 |
+| DeepDTA     |   CNN      | Pubchem Sim | 0.702 | 0.541 |
+| DeepDTA     |  S–W       | CNN         | 0.759 | 0.355 |
+| DeepDTA     |    CNN     | CNN         | 0.857 | 0.211 |
 ## Acknowledgements
 Please cite the original paper if you are using this code in your work.
 ```
@@ -132,4 +134,3 @@ Please cite the original paper if you are using this code in your work.
   publisher={Oxford University Press}
 }
 ```
-
