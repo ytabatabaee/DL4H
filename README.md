@@ -38,14 +38,22 @@ DeepDTA is a deep learning-based model that predicts the level of interaction, o
 - [Numpy](https://numpy.org)
 - [Matplotlib](https://matplotlib.org)
 
-It is important to note that most Tensorflow and Keras commands used in DeepDTA code are deprecated in the new version of Tensorflow, and therefore Tensorflow 1.x should necessarily be used to run the code. Google Colab loads Tensorflow 2.x by default, and the 1.x version could be loaded with the following command:
+It is important to note that most Tensorflow and Keras commands used in DeepDTA code are deprecated in the new version of Tensorflow, and therefore Tensorflow 1.x should necessarily be used to run the code. Google Colab loads Tensorflow 2.x by default, and the 1.x version can be loaded with the following command:
 ```%tensorflow_version 1.x```
 
-**SimBoost** is written in R and has the following dependencies.
+**SimBoost** (official code) is written in R and has the following dependencies.
 - [xgboost 1.6.0](https://cran.r-project.org/web/packages/xgboost/index.html)
 - [igraph 1.3.0](https://igraph.org/r/)
 - [recosystem 0.11.0](https://cran.r-project.org/web/packages/recosystem/index.html)
 - [ROCR 1.0](https://cran.r-project.org/web/packages/ROCR/index.html)
+
+**SimBoost** (unofficial code) is written in Python 3 and has the following dependencies.
+- [Python 3.4+](https://www.python.org)
+- [scikit-learn](https://scikit-learn.org/stable/)
+- [python-igraph](https://igraph.org/python/)
+- [Tensorflow 1.x](https://www.tensorflow.org/install/)
+- [Numpy](https://numpy.org)
+- [Matplotlib](https://matplotlib.org)
 
 **KronRLS** is written in Python 2 and has the following dependencies.
 - [Python 2.7+](https://www.python.org)
@@ -93,23 +101,23 @@ For each experiment on the Davis dataset, the total number of training samples w
 ### Davis
 | Method      | Proteins    |Compounds    | CI-Index | MSE Loss |
 | ----------- | ----------- | ----------- | ----------- | ----------- |
-| KronRLS     |  S–W       | Pubchem Sim |  |  |  |
-| SimBoost    |  S–W       | Pubchem Sim |  |  |  |
-| DeepDTA     |  S–W       | Pubchem Sim |  |  |  |
-| DeepDTA     |   CNN      | Pubchem Sim |  |  |  |
-| DeepDTA     |  S–W       | CNN         |  |  |  |
-| DeepDTA     |    CNN     | CNN         |  |  |  |
+| KronRLS     |  S–W       | Pubchem Sim | 0.867 | 0.376 | 
+| SimBoost    |  S–W       | Pubchem Sim | 0.862 | 0.298 | 
+| DeepDTA     |  S–W       | Pubchem Sim | 0.771 | 0.685 | 
+| DeepDTA     |   CNN      | Pubchem Sim | 0.810 | 0.490 | 
+| DeepDTA     |  S–W       | CNN         | 0.823 | 0.462 | 
+| DeepDTA     |    CNN     | CNN         | 0.876 | 0.255 | 
 
 ### KIBA
 For each experiment on the KIBA dataset, the total number of training samples was 78836 and the total number of test samples was 19709.
 | Method      | Proteins    |Compounds    | CI-Index | MSE Loss |
 | ----------- | ----------- | ----------- | ----------- | ----------- |
-| KronRLS     |  S–W       | Pubchem Sim |  |  |  |
-| SimBoost    |  S–W       | Pubchem Sim |  |  |  |
-| DeepDTA     |  S–W       | Pubchem Sim |  |  |  |
-| DeepDTA     |   CNN      | Pubchem Sim |  |  |  |
-| DeepDTA     |  S–W       | CNN         |  |  |  |
-| DeepDTA     |    CNN     | CNN         |  |  |  |
+| KronRLS     |  S–W       | Pubchem Sim | 0.794 | 0.373 | 
+| SimBoost    |  S–W       | Pubchem Sim | 0.824 | 0.279 | 
+| DeepDTA     |  S–W       | Pubchem Sim | 0.704 | 1.59 | 
+| DeepDTA     |   CNN      | Pubchem Sim | 0.702 | 0.541 | 
+| DeepDTA     |  S–W       | CNN         | 0.759 | 0.355 | 
+| DeepDTA     |    CNN     | CNN         | 0.857 | 0.211 | 
 ## Acknowledgements
 Please cite the original paper if you are using this code in your work.
 ```
