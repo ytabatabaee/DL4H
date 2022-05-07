@@ -155,12 +155,50 @@ Rscript preprocess_metz_davis.R
 Rscript preprocess_Kiba.R
 ```
 Note that the kiba dataset should be manually downloaded, but davis will be downloaded automatically in the code. 
+
+### Training and Evaluation
+The training and evaluation can be done with a single command in all methods, but the evaluation could be done separately by loading the pretrained models as well. We will bring the commands used for running the experiments for each method below:
+#### DeepDTA
+DeepDTA can be run with the following command.
+```python
+python3 run_experiments.py --num_windows 32 \
+                          --seq_window_lengths 8 \
+                          --smi_window_lengths 6 \
+                          --batch_size 256 \
+                          --num_epoch 100 \
+                          --max_seq_len 1000 \
+                          --max_smi_len 100 \
+                          --dataset_path 'data/kiba/' \
+                          --problem_type 1 \
+                          --log_dir 'logs/'
+```
+We explain some of the non-trivial parameters below:
+* `--num_windows`: The number of filters for the first convlutional layer.
+* `--seq_window_lengths`, `--smi_window_lengths`: fixed length of windows for protein (seq) and compound (smiles) sequences. Could be provided as a range, such as `4 8 12`.
+* `--max_seq_len`, `--max_smi_len`: fixed lengths of protein (seq) and compound (smi) sequences. These were set as 1000 and 100 respectively for kiba and 1200 and 85 for davis in the paper.
+* `--problem_type`: 1 for kiba and 0 for davis, indicates whether a log transformation is needed 
+#### SimBoost
+We only ran the python version of SimBoost in this project. The python codes for training and evaluation of SimBoost are available in the jupyter notebooks [simboost_python/SimBoost_kiba.ipynb](simboost_python/SimBoost_kiba.ipynb) and [simboost_python/SimBoost_davis.ipynb](simboost_python/SimBoost_davis.ipynb).
+
+* Command for running the R version:
+```R
+Rscript Sequential.feature.*.R
+Rscript Sequential.cv.xgb.quantile.exec.R
+Rscript Sequential.cv.xgb.exec.R
+```
+where `*` is the name of the dataset (kiba or davis).
+#### KronRLS
+
 ## Pretrained Models
 Most of the pretrained models are provided in the [pretrained_models](./pretrained_models) directory in Github, but the ones that were larger than 100MB are provided in Google Drive, with links available below:
 - KronRLS davis model: [pretrained_models/davis_kronrls.pkl](./pretrained_models/davis_kronrls.pkl)
 - KronRLS KIBA model: [kiba_kronrls.pkl - Google Drive link](https://drive.google.com/drive/folders/1W9iw1pddJd3y52l56Ac1eIDWplLAtJWP?usp=sharing)
 - SimBoost davis model: [pretrained_models/davis_simboost.pkl](./pretrained_models/davis_simboost.pkl)
 - SimBoost KIBA model: [pretrained_models/kiba_simboost.pkl](./pretrained_models/kiba_simboost.pkl)
+- DeepDTA (CNN, CNN) davis model: [pretrained_models/combined_davis.h5](./pretrained_models/combined_davis.h5)
+- DeepDTA (CNN, CNN) KIBA model: [pretrained_models/combined_kiba.h5](./pretrained_models/combined_kiba.h5)
+- DeepDTA (SW, CNN) davis model: [pretrained_models/single_drug_davis.h5](./pretrained_models/single_drug_davis.h5)
+- DeepDTA (SW, CNN) kiba model: [pretrained_models/single_drug_kiba.h5](./pretrained_models/single_drug_kiba.h5)
 
 #### Loading DeepDTA pretrained models
 *Note*: Since the Keras and Tensorflow versions used in DeepDTA are old and now deprecated, the recent `h5py` packages can not be used to load the pretrained models. You will need to reinstall the package using the following command:
