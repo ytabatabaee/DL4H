@@ -7,8 +7,8 @@ This repository contains the codes and data for the final project of Deep Learni
 - [Data](#data)
 - [Codes](#codes)
   * [Preprocessing](#preprocessing)
-  * [Training](#training)
-  * [Evaluation](#evaluation)
+  * [Training](#training-and-evaluation)
+  * [Evaluation](#training-and-evaluation)
 - [Pretrained Models](#pretrained-models)
 - [Results](#results)
 - [Acknowledgements](#acknowledgements)
@@ -160,8 +160,9 @@ Note that the kiba dataset should be manually downloaded, but davis will be down
 The training and evaluation can be done with a single command in all methods, but the evaluation could be done separately by loading the pretrained models as well. We will bring the commands used for running the experiments for each method below:
 #### DeepDTA
 DeepDTA can be run with the following command.
-```python
-python3 run_experiments.py --num_windows 32 \
+```bash
+$ cd DeepDTA/source/
+$ python3 run_experiments.py --num_windows 32 \
                           --seq_window_lengths 8 \
                           --smi_window_lengths 6 \
                           --batch_size 256 \
@@ -177,18 +178,31 @@ We explain some of the non-trivial parameters below:
 * `--seq_window_lengths`, `--smi_window_lengths`: fixed length of windows for protein (seq) and compound (smiles) sequences. Could be provided as a range, such as `4 8 12`.
 * `--max_seq_len`, `--max_smi_len`: fixed lengths of protein (seq) and compound (smi) sequences. These were set as 1000 and 100 respectively for kiba and 1200 and 85 for davis in the paper.
 * `--problem_type`: 1 for kiba and 0 for davis, indicates whether a log transformation is needed 
+
+To use a different performance measure or run one of the DeepDTA baselines, you can change the following two lines at the end of `run_experiments.py`:
+```python
+perfmeasure = get_cindex # specify performance measure, e.g. mse loss
+deepmethod = build_combined_categorical # specify model type, e.g. baseline, combined, etc
+```
 #### SimBoost
 We only ran the python version of SimBoost in this project. The python codes for training and evaluation of SimBoost are available in the jupyter notebooks [simboost_python/SimBoost_kiba.ipynb](simboost_python/SimBoost_kiba.ipynb) and [simboost_python/SimBoost_davis.ipynb](simboost_python/SimBoost_davis.ipynb).
 
 * Command for running the R version:
-```R
-Rscript Sequential.feature.*.R
-Rscript Sequential.cv.xgb.quantile.exec.R
-Rscript Sequential.cv.xgb.exec.R
+```bash
+$ cd simboost_R/xgboost/
+$ Rscript Sequential.feature.*.R
+$ Rscript Sequential.cv.xgb.quantile.exec.R
+$ Rscript Sequential.cv.xgb.exec.R
 ```
 where `*` is the name of the dataset (kiba or davis).
 #### KronRLS
-
+KronRLS can be run with the following commands. Note that `setup.py` should only be run to install for the first time.
+```bash
+$ cd KronRLS/
+$ python2 setup.py # use only in the first run
+$ python2 kronecker_experiments.py
+```
+The dataset and problem type (regression or classification) could be specified in the main function in the `kronecker_experiments.py`, you can just uncomment the function you want to run, such as `kiba_regression()` or `davis_regression()`.
 ## Pretrained Models
 Most of the pretrained models are provided in the [pretrained_models](./pretrained_models) directory in Github, but the ones that were larger than 100MB are provided in Google Drive, with links available below:
 - KronRLS davis model: [pretrained_models/davis_kronrls.pkl](./pretrained_models/davis_kronrls.pkl)
@@ -199,6 +213,10 @@ Most of the pretrained models are provided in the [pretrained_models](./pretrain
 - DeepDTA (CNN, CNN) KIBA model: [pretrained_models/combined_kiba.h5](./pretrained_models/combined_kiba.h5)
 - DeepDTA (SW, CNN) davis model: [pretrained_models/single_drug_davis.h5](./pretrained_models/single_drug_davis.h5)
 - DeepDTA (SW, CNN) kiba model: [pretrained_models/single_drug_kiba.h5](./pretrained_models/single_drug_kiba.h5)
+- DeepDTA (CNN, Pubchem Sim) davis model: [pretrained_models/single_prot_davis.h5](./pretrained_models/single_prot_davis.h5)
+- DeepDTA (CNN, Pubchem Sim) kiba model: [pretrained_models/single_prot_kiba.h5](./pretrained_models/single_prot_kiba.h5)
+- DeepDTA (SW, Pubchem Sim) davis model: [pretrained_models/baseline_davis.h5](./pretrained_models/baseline_davis.h5)
+- DeepDTA (SW, Pubchem Sim) kiba model: [pretrained_models/baseline_kiba.h5](./pretrained_models/baseline_kiba.h5)
 
 #### Loading DeepDTA pretrained models
 *Note*: Since the Keras and Tensorflow versions used in DeepDTA are old and now deprecated, the recent `h5py` packages can not be used to load the pretrained models. You will need to reinstall the package using the following command:
@@ -212,6 +230,17 @@ model = load_model('combined_davis.h5', custom_objects={"cindex_score": cindex_s
 model.summary()
 ```
 Based on where you run the code, you may also need to have the `cindex_score` function, which is available at [DeepDTA/source/run_experiments.py](DeepDTA/source/run_experiments.py).
+
+#### Evaluating the pretrained models
+The evaluation and training codes are not separate for any of the methods, however, evaluation can be easily done using the pretrained models as well. A complete example is available at the end of [simboost_python/SimBoost_davis.ipynb](simboost_python/SimBoost_davis.ipynb). All the `.pkl` models can be loaded with pickle as below.
+```python
+import pickle
+loaded_model = pickle.load(open('davis_simboost.pkl', 'rb'))
+Y_pred = loaded_model.predict(X_test)
+
+print("Davis Test CI-Index: %.3f" % cindex_score(Y_test, Y_pred))
+print("Davis Test MSE: %.3f" % mean_squared_error(Y_test, Y_pred))
+```
 
 ## Results
 For each experiment on the Davis dataset, the total number of training samples was 20036 and the total number of test samples was 5010.
