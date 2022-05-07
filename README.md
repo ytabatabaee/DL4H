@@ -1,5 +1,5 @@
 # Reproducing DeepDTA: Deep Drug–Target Binding Affinity Prediction
-This repository contains the codes and data for the final project of Deep Learning for Healthcare course at UIUC in Spring 2022. This project attempts to reproduce the major results of the DeepDTA paper, and includes some additional experiments beyond the paper.
+This repository contains the codes and data for the final project of Deep Learning for Healthcare course at UIUC in Spring 2022. This project attempts to reproduce the major results of the [DeepDTA paper (Ozturk et al.,2018)](https://academic.oup.com/bioinformatics/article/34/17/i821/5093245), and includes some additional experiments beyond the paper.
 
 ## Contents
 - [DeepDTA](#deepdta)
@@ -78,6 +78,83 @@ The paper uses the Davis Kinase binding affinity dataset [(Davis et al., 2011)](
 
 **Data Statistics**: The [data_statistics.ipynb](./data_statistics.ipynb) file demonstrates some statistics of the datasets, including distribution of the binding affinity scores and distribution of the protein and SMILES sequence lengths for both Davis and KIBA datasets.
 
+## Codes
+### Preprocessing
+The preprocessed data is already available at [DeepDTA/data](DeepDTA/data). *All the experiments were done on this preprocessed data, and no extra preprocessing is required*. The [data_statistics.ipynb](./data_statistics.ipynb) jupyter notebook shows how the data can be loaded and used in any code, and demonstrates a reproduction of Figure 1 in the paper. 
+
+#### Additional Explanation of the Data 
+This section is partially taken from the original README of the paper's repository.
+
+**Similarity files**
+
+For each dataset, there are two similarity files, drug-drug and target-target similarities.
+*  Drug-drug similarities obtained via Pubchem structure clustering.
+*  Target-target similarities are obtained via S-W similarity.
+
+These files were used to re-produce the results of two other methods [(Pahikkala et al., 2017)](https://academic.oup.com/bib/article/16/2/325/246479) and [(He et al., 2017)](https://jcheminf.biomedcentral.com/articles/10.1186/s13321-017-0209-z), and also for some experiments in DeepDTA model, please refer to [paper](https://academic.oup.com/bioinformatics/article/34/17/i821/5093245). 
+
+**Binding affinity files**
+
+*  For davis dataset, standard value is Kd in nM. In the article, the following transformation was used:
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=pK_{d}=-log_{10}\frac{K_d}{1e9}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?pK_{d}=-log_{10}\frac{K_d}{1e9}" title="pK_{d}=-log_{10}\frac{K_d}{1e9}" /></a>
+
+* For KIBA dataset, standard value is KIBA score. Two versions of the binding affinity value txt files correspond the original values and transformed values ([more information here](https://jcheminf.biomedcentral.com/articles/10.1186/s13321-017-0209-z)). In the article the tranformed form was used. 
+
+* nan values indicate there is no experimental value for that drug-target pair.
+
+**Train and test folds**
+There are two files for each dataset: train fold and test fold. Both of these files keep the position information for the binding affinity value given in binding affinity matrices in the text files. 
+*  Since the authors performed 5-fold cv, each fold file contains five different set of positions.
+*  Test set is same for all five training sets.
+
+**For using the folds**
+*   Load affinity matrix Y 
+
+```python
+import pickle
+import numpy as np
+
+Y = pickle.load(open("Y", "rb"))  # Y = pickle.load(open("Y", "rb"), encoding='latin1')
+# log transformation for davis 
+if log_space:
+        Y = -(np.log10(Y/(math.pow(10,9))))
+label_row_inds, label_col_inds = np.where(np.isnan(Y)==False)
+```
+
+*  label_row_inds: drug indices for the corresponding affinity matrix positions (flattened)  
+    e.g. 36275th point in the KIBA Y matrix indicates the 364th drug (same order in the SMILES file) 
+    ```python
+    label_row_inds[36275]
+    ```
+
+*  label_col_inds: protein indices for the corresponding affinity matrix positions (flattened)
+
+    e.g.  36275th point in the KIBA Y matrix indicates the 120th protein (same order in the protein sequence file) 
+    ```python
+    label_col_inds[36275]
+    ```
+    
+*   You can then load the fold files as follows:
+    ```python
+    import json
+    test_fold = json.load(open(yourdir + "folds/test_fold_setting1.txt"))
+    train_folds = json.load(open(yourdir + "folds/train_fold_setting1.txt"))
+    
+    test_drug_indices = label_row_inds[test_fold]
+    test_protein_indices = label_col_inds[test_fold]
+    
+    ```
+    
+    Remember that, ```train_folds``` contain an array of 5 lists, each of which correspond to a training set.
+
+#### Preprocessing for SimBoost
+A code for preprocessing the raw data and generating the similarity matrices for SimBoost is available in the [simboost_R/preprocessing/](simboost_R/preprocessing/) directory and can be run using the commands below, which will generate `.Rda` files in the [simboost_R/data/](simboost_R/data/) directory.
+```r
+Rscript preprocess_metz_davis.R
+Rscript preprocess_Kiba.R
+```
+Note that the kiba dataset should be manually downloaded, but davis will be downloaded automatically in the code. 
 ## Pretrained Models
 Most of the pretrained models are provided in the [pretrained_models](./pretrained_models) directory in Github, but the ones that were larger than 100MB are provided in Google Drive, with links available below:
 - KronRLS davis model: [pretrained_models/davis_kronrls.pkl](./pretrained_models/davis_kronrls.pkl)
