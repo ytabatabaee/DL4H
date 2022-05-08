@@ -203,6 +203,9 @@ $ python2 setup.py # use only in the first run
 $ python2 kronecker_experiments.py
 ```
 The dataset and problem type (regression or classification) could be specified in the main function in the `kronecker_experiments.py`, you can just uncomment the function you want to run, such as `kiba_regression()` or `davis_regression()`.
+#### Log files and plots
+The MSE loss and CI-score plots of the DeepDTA model and its variants are provided in the [DeepDTA/source/figures/](DeepDTA/source/figures/) directory and the log files for training and evaluation are provided in the [DeepDTA/source/logs/](DeepDTA/source/logs/) directory.
+
 ## Pretrained Models
 Most of the pretrained models are provided in the [pretrained_models](./pretrained_models) directory in Github, but the ones that were larger than 100MB are provided in Google Drive, with links available below:
 - KronRLS davis model: [pretrained_models/davis_kronrls.pkl](./pretrained_models/davis_kronrls.pkl)
