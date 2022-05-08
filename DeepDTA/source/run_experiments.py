@@ -77,7 +77,6 @@ def build_combined_onehot(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH2):
 
 
     encode_interaction = keras.layers.concatenate([encode_smiles, encode_protein])
-    #encode_interaction = keras.layers.concatenate([encode_smiles, encode_protein], axis=-1) #merge.Add()([encode_smiles, encode_protein])
 
     # Fully connected 
     FC1 = Dense(1024, activation='relu')(encode_interaction)
@@ -100,14 +99,11 @@ def build_combined_onehot(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH2):
 
 
 
-
-
 def build_combined_categorical(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH2):
    
-    XDinput = Input(shape=(FLAGS.max_smi_len,), dtype='int32') ### Buralar flagdan gelmeliii
+    XDinput = Input(shape=(FLAGS.max_smi_len,), dtype='int32')
     XTinput = Input(shape=(FLAGS.max_seq_len,), dtype='int32')
 
-    ### SMI_EMB_DINMS  FLAGS GELMELII 
     encode_smiles = Embedding(input_dim=FLAGS.charsmiset_size+1, output_dim=128, input_length=FLAGS.max_smi_len)(XDinput) 
     encode_smiles = Conv1D(filters=NUM_FILTERS, kernel_size=FILTER_LENGTH1,  activation='relu', padding='valid',  strides=1)(encode_smiles)
     encode_smiles = Conv1D(filters=NUM_FILTERS*2, kernel_size=FILTER_LENGTH1,  activation='relu', padding='valid',  strides=1)(encode_smiles)
@@ -147,97 +143,104 @@ def build_combined_categorical(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH
 
 def build_single_drug(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH2):
    
-    interactionModel = Sequential()
-    XTmodel = Sequential()
-    XTmodel.add(Activation('linear', input_shape=(FLAGS.target_count,)))
+    XDinput = Input(shape=(FLAGS.max_smi_len,), dtype='int32')
+    XTinput = Input(shape=(FLAGS.max_seq_len,))
+
+    XTmodel = Dense(1, activation='linear', input_shape=(FLAGS.target_count,))(XTinput)
+
+    encode_smiles = Embedding(input_dim=FLAGS.charsmiset_size+1, output_dim=128, input_length=FLAGS.max_smi_len)(XDinput) 
+    encode_smiles = Conv1D(filters=NUM_FILTERS, kernel_size=FILTER_LENGTH1,  activation='relu', padding='valid',  strides=1)(encode_smiles)
+    encode_smiles = Conv1D(filters=NUM_FILTERS*2, kernel_size=FILTER_LENGTH1,  activation='relu', padding='valid',  strides=1)(encode_smiles)
+    encode_smiles = Conv1D(filters=NUM_FILTERS*3, kernel_size=FILTER_LENGTH1,  activation='relu', padding='valid',  strides=1)(encode_smiles)
+    encode_smiles = GlobalMaxPooling1D()(encode_smiles)
 
 
-    encode_smiles = Sequential()
-    encode_smiles.add(Embedding(input_dim=FLAGS.charsmiset_size+1, output_dim=128, input_length=FLAGS.max_smi_len)) 
-    encode_smiles.add(Conv1D(filters=NUM_FILTERS, kernel_size=FILTER_LENGTH1,  activation='relu', padding='valid',  strides=1)) #input_shape=(MAX_SMI_LEN, SMI_EMBEDDING_DIMS)
-    encode_smiles.add(Conv1D(filters=NUM_FILTERS*2, kernel_size=FILTER_LENGTH1,  activation='relu', padding='valid',  strides=1))
-    encode_smiles.add(Conv1D(filters=NUM_FILTERS*3, kernel_size=FILTER_LENGTH1,  activation='relu', padding='valid',  strides=1))
-    encode_smiles.add(GlobalMaxPooling1D())
-
-
-    interactionModel.add(Merge([encode_smiles, XTmodel], mode='concat', concat_axis=1))
-    #interactionModel.add(layers.merge.Concatenate([XDmodel, XTmodel]))
+    encode_interaction = keras.layers.concatenate([encode_smiles, XTmodel], axis=-1)
 
     # Fully connected 
-    interactionModel.add(Dense(1024, activation='relu')) #1024
-    interactionModel.add(Dropout(0.1))
-    interactionModel.add(Dense(1024, activation='relu')) #1024
-    interactionModel.add(Dropout(0.1))
-    interactionModel.add(Dense(512, activation='relu')) 
+    FC1 = Dense(1024, activation='relu')(encode_interaction)
+    FC2 = Dropout(0.1)(FC1)
+    FC2 = Dense(1024, activation='relu')(FC2)
+    FC2 = Dropout(0.1)(FC2)
+    FC2 = Dense(512, activation='relu')(FC2)
 
+    # And add a logistic regression on top
+    predictions = Dense(1, kernel_initializer='normal')(FC2) #OR no activation, rght now it's between 0-1, do I want this??? activation='sigmoid'
 
-    interactionModel.add(Dense(1, kernel_initializer='normal'))
-    interactionModel.compile(optimizer='adam', loss='mean_squared_error', metrics=[cindex_score])
+    interactionModel = Model(inputs=[XDinput, XTinput], outputs=[predictions])
 
+    interactionModel.compile(optimizer='adam', loss='mean_squared_error', metrics=[cindex_score]) #, metrics=['cindex_score']
     print(interactionModel.summary())
     plot_model(interactionModel, to_file='figures/build_single_drug.pdf')
 
     return interactionModel
 
 
+
 def build_single_prot(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH2):
-   
-    interactionModel = Sequential()
-    XDmodel = Sequential()
-    XDmodel.add(Activation('linear', input_shape=(FLAGS.drugcount,)))
 
+    XDinput = Input(shape=(FLAGS.max_smi_len,))
+    XTinput = Input(shape=(FLAGS.max_seq_len,))
 
-    XTmodel1 = Sequential()
-    XTmodel1.add(Embedding(input_dim=FLAGS.charseqset_size+1, output_dim=128,  input_length=FLAGS.max_seq_len))
-    XTmodel1.add(Conv1D(filters=NUM_FILTERS, kernel_size=FILTER_LENGTH2,  activation='relu', padding='valid',  strides=1)) #input_shape=(MAX_SEQ_LEN, SEQ_EMBEDDING_DIMS)
-    XTmodel1.add(Conv1D(filters=NUM_FILTERS*2, kernel_size=FILTER_LENGTH2,  activation='relu', padding='valid',  strides=1))
-    XTmodel1.add(Conv1D(filters=NUM_FILTERS*3, kernel_size=FILTER_LENGTH2,  activation='relu', padding='valid',  strides=1))
-    XTmodel1.add(GlobalMaxPooling1D())
+    XDmodel = Dense(1, activation='linear', input_shape=(FLAGS.drug_count, ))(XDinput)
 
+    encode_protein = Embedding(input_dim=FLAGS.charseqset_size+1, output_dim=128, input_length=FLAGS.max_seq_len)(XTinput)
+    encode_protein = Conv1D(filters=NUM_FILTERS, kernel_size=FILTER_LENGTH2,  activation='relu', padding='valid',  strides=1)(encode_protein)
+    encode_protein = Conv1D(filters=NUM_FILTERS*2, kernel_size=FILTER_LENGTH2,  activation='relu', padding='valid',  strides=1)(encode_protein)
+    encode_protein = Conv1D(filters=NUM_FILTERS*3, kernel_size=FILTER_LENGTH2,  activation='relu', padding='valid',  strides=1)(encode_protein)
+    encode_protein = GlobalMaxPooling1D()(encode_protein)
 
-    interactionModel.add(Merge([XDmodel, XTmodel1], mode='concat', concat_axis=1))
+    encode_interaction = keras.layers.concatenate([XDmodel, encode_protein], axis=-1)
 
     # Fully connected 
-    interactionModel.add(Dense(1024, activation='relu'))
-    interactionModel.add(Dropout(0.1))
-    interactionModel.add(Dense(1024, activation='relu'))
-    interactionModel.add(Dropout(0.1))
-    interactionModel.add(Dense(512, activation='relu'))
+    FC1 = Dense(1024, activation='relu')(encode_interaction)
+    FC2 = Dropout(0.1)(FC1)
+    FC2 = Dense(1024, activation='relu')(FC2)
+    FC2 = Dropout(0.1)(FC2)
+    FC2 = Dense(512, activation='relu')(FC2)
 
-    interactionModel.add(Dense(1, kernel_initializer='normal'))
-    interactionModel.compile(optimizer='adam', loss='mean_squared_error', metrics=[cindex_score])
+    # And add a logistic regression on top
+    predictions = Dense(1, kernel_initializer='normal')(FC2) #OR no activation, rght now it's between 0-1, do I want this??? activation='sigmoid'
 
+    interactionModel = Model(inputs=[XDinput, XTinput], outputs=[predictions])
+
+    interactionModel.compile(optimizer='adam', loss='mean_squared_error', metrics=[cindex_score]) #, metrics=['cindex_score']
     print(interactionModel.summary())
     plot_model(interactionModel, to_file='figures/build_single_protein.pdf')
 
     return interactionModel
 
+
 def build_baseline(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH2):
-    interactionModel = Sequential()
 
-    XDmodel = Sequential()
-    XDmodel.add(Dense(1, activation='linear', input_shape=(FLAGS.drug_count, )))
+    XDinput = Input(shape=(FLAGS.max_smi_len,))
+    XTinput = Input(shape=(FLAGS.max_seq_len,))
 
-    XTmodel = Sequential()
-    XTmodel.add(Dense(1, activation='linear', input_shape=(FLAGS.target_count,)))
+    XDmodel = Dense(1, activation='linear', input_shape=(FLAGS.drug_count, ))(XDinput)
+    XTmodel = Dense(1, activation='linear', input_shape=(FLAGS.target_count,))(XTinput)
 
-
-    interactionModel.add(Merge([XDmodel, XTmodel], mode='concat', concat_axis=1))
-
+    encode_interaction = keras.layers.concatenate([XDmodel, XTmodel], axis=-1) #Merge([XDmodel, XTmodel], mode='concat', concat_axis=1))
+    
+    
     # Fully connected 
-    interactionModel.add(Dense(1024, activation='relu'))
-    interactionModel.add(Dropout(0.1))
-    interactionModel.add(Dense(1024, activation='relu'))
-    interactionModel.add(Dropout(0.1))
-    interactionModel.add(Dense(512, activation='relu'))
+    FC1 = Dense(1024, activation='relu')(encode_interaction)
+    FC2 = Dropout(0.1)(FC1)
+    FC2 = Dense(1024, activation='relu')(FC2)
+    FC2 = Dropout(0.1)(FC2)
+    FC2 = Dense(512, activation='relu')(FC2)
 
-    interactionModel.add(Dense(1, kernel_initializer='normal'))
-    interactionModel.compile(optimizer='adam', loss='mean_squared_error', metrics=[cindex_score])
+
+    predictions = Dense(1, kernel_initializer='normal')(FC2) 
+
+    interactionModel = Model(inputs=[XDinput, XTinput], outputs=[predictions])
+    interactionModel.compile(optimizer='adam', loss='mean_squared_error', metrics=[cindex_score]) #, metrics=['cindex_score']
+    
 
     print(interactionModel.summary())
     plot_model(interactionModel, to_file='figures/build_baseline.pdf')
 
     return interactionModel
+
 
 def nfold_1_2_3_setting_sample(XD, XT,  Y, label_row_inds, label_col_inds, measure, runmethod,  FLAGS, dataset):
 
@@ -359,10 +362,10 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
                     param3value = paramset3[param3ind]
 
                     gridmodel = runmethod(FLAGS, param1value, param2value, param3value)
-                    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=15)
-                    mc = ModelCheckpoint(filepath='pretrained/combined_kiba.h5')
+                    #es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=15)
+                    mc = ModelCheckpoint(filepath='pretrained/baseline_kiba_wes.h5')
                     gridres = gridmodel.fit(([np.array(train_drugs),np.array(train_prots) ]), np.array(train_Y), batch_size=batchsz, epochs=epoch, 
-                            validation_data=( ([np.array(val_drugs), np.array(val_prots) ]), np.array(val_Y)),  shuffle=False, callbacks=[es, mc] ) 
+                            validation_data=( ([np.array(val_drugs), np.array(val_prots) ]), np.array(val_Y)),  shuffle=False, callbacks=[mc] ) 
 
 
                     predicted_labels = gridmodel.predict([np.array(val_drugs), np.array(val_prots) ])
@@ -390,7 +393,7 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
         tecols = label_col_inds[valinds]
 
         val_drugs, val_prots,  val_Y = prepare_interaction_pairs(XD, XT,  Y, terows, tecols)
-        trained_model = load_model('pretrained/combined_kiba.h5', custom_objects={"cindex_score": cindex_score})
+        trained_model = load_model('pretrained/baseline_kiba_wes.h5', custom_objects={"cindex_score": cindex_score})
         predicted_labels = trained_model.predict([np.array(val_drugs), np.array(val_prots)])
         plotScatter(predicted_labels, val_Y, foldind)
         break
@@ -468,7 +471,7 @@ def plotLoss(history, batchind, epochind, param3ind, foldind):
 
 
 def plotScatter(Y_pred, Y_true, foldind):
-    figname = "kiba_scatter_" + str(foldind) + ".pdf"
+    figname = "kiba_scatter_baseline_wes_" + str(foldind) + ".pdf"
     plt.figure()
     plt.title('KIBA')
     plt.ylabel('Measured')
@@ -556,10 +559,9 @@ def experiment(FLAGS, perfmeasure, deepmethod, foldcount=6): #5-fold cross valid
 def run_regression( FLAGS ): 
 
     perfmeasure = get_cindex
-    deepmethod = build_combined_categorical
+    deepmethod = build_baseline
 
     experiment(FLAGS, perfmeasure, deepmethod)
-    #deepmethod.save('pretrained/build_combined_categorical')
 
 
 

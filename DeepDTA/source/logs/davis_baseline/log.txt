@@ -1,0 +1,13 @@
+Namespace(batch_size=256, binary_th=0.0, checkpoint_path='', dataset_path='data/davis/', is_log=1, learning_rate=0.001, log_dir='logs/1650459959.964129/', max_seq_len=1200, max_smi_len=85, num_classes=0, num_epoch=100, num_hidden=0, num_windows=[32], problem_type=1, seq_window_lengths=[8], smi_window_lengths=[6])
+---Parameter Search-----
+P1 = 0,  P2 = 0, P3 = 0, Fold = 0, CI-i = 0.736587, CI-ii = 0.743304, MSE = 0.637041
+---Parameter Search-----
+P1 = 0,  P2 = 0, P3 = 0, Fold = 0, CI-i = 0.771185, CI-ii = 0.775716, MSE = 0.684879
+---FINAL RESULTS-----
+best param index = 0,  best param = 0.00000
+Test Performance CI
+[0.7711851616689154, 0, 0, 0, 0]
+Test Performance MSE
+[0.6848794922619285, 0, 0, 0, 0]
+Setting 1
+avg_perf = 0.77119,  avg_mse = 0.68488, std = 0.00000
